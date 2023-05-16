@@ -2,7 +2,7 @@
 import torch
 import torch.nn as nn
 import torchvision.transforms.functional as TF
-import  semanticseg.DataDict
+#import  DataDict
 #import semanticseg.DataDictModule
 
 from dataset import CarvanaDataset
@@ -25,7 +25,7 @@ class DoubleConv(nn.Module) :
 
 class UNET(nn.Module) : 
     def __init__(
-            self, in_channels= 3, out_channels =4, features=[64, 128, 256, 512],
+            self, in_channels= 3, out_channels =1, features=[64, 128, 256, 512],
     ): 
         super(UNET, self).__init__()
         self.ups=nn.ModuleList()

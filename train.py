@@ -1,4 +1,7 @@
 from tqdm import tqdm
+import sys
+
+#sys.path.append('c:/users/blanchard/appdata/roaming/python/python39/site-packages')
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
 import torch.nn as nn
@@ -6,13 +9,13 @@ import torch
 import torch.optim as optim
 from segmentation_pytorch import UNET
 #import semanticseg.DataDictModule
-from semanticseg.utils import (load_checkpoint, save_checkpoint, check_accuracy,get_loaders, save_predictions_as_imags)
-from semanticseg.DataDictModule import DataDictModule
+from utils import (load_checkpoint, save_checkpoint, check_accuracy,get_loaders, save_predictions_as_imags)
+#from semanticseg.DataDictModule import DataDictModule
 
 ## Hyperparameters 
 LEARNIN_RATE =1E-4
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-BATCH_SIZE = 4
+BATCH_SIZE = 1
 NUM_EPOCHS= 100
 NUM_WORKERS = 2
 IMAGE_HEIGHT = 512
@@ -20,19 +23,21 @@ IMAGE_WIDTH = 512
 PIN_MEMORY = True
 LOAD_MODEL = True
 
-TRAIN_IMG_DIR  = "C:\\temp_resultat\\images_train"
-TRAIN_MASK_DIR  = "C:\\temp_resultat\\Labels_train"
-VAL_IMG_DIR  = "C:\\temp_resultat\\images_val"
-VAL_MASK_DIR  = "C:\\temp_resultat\\Labels_val"
+TRAIN_IMG_DIR  = "C:\\Users\\ABDEL\\Desktop\\POURABDEL\\Donnees d'entrainnement\\train_1\\images_train"
+TRAIN_MASK_DIR  = "C:\\Users\\ABDEL\\Desktop\\POURABDEL\\Donnees d'entrainnement\\train_1\\Labels_train"
+VAL_IMG_DIR  = "C:\\Users\\ABDEL\\Desktop\\POURABDEL\\Donnees d'entrainnement\\train_1\\images_val"
+VAL_MASK_DIR  = "C:\\Users\\ABDEL\\Desktop\\POURABDEL\\Donnees d'entrainnement\\train_1\\Labels_val"
 
 def train_fn(loader, model, optimizer, loss_fn, scaler):
     loop = tqdm(loader)
 
     for batch_idx, (data, targets) in enumerate(loop) : 
         data = data.to(device = DEVICE)
-        targets = targets.float().unsqueeze(1).repeat(1, 4, 1, 1).to(device= DEVICE)
+        #targets = targets.float().unsqueeze(1).to(device= DEVICE)
+        targets = targets.float().unsqueeze(1).to(device= DEVICE)
         #num_classes = 4
         #targets = torch.nn.functional.one_hot(targets.long(), num_classes)
+        #targets = targets.permute(0, 3, 1, 2)
 
         #FORWARD 
         with torch.cuda.amp.autocast() : 
@@ -75,7 +80,7 @@ def main():
         ToTensorV2(),
         ],
     )
-    model = UNET(in_channels = 3, out_channels = 4).to(DEVICE)
+    model = UNET(in_channels = 3, out_channels = 1).to(DEVICE)
     loss_fn = nn.BCEWithLogitsLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=LEARNIN_RATE)
     train_loader, val_loader  = get_loaders(
@@ -89,25 +94,27 @@ def main():
         NUM_WORKERS, 
         PIN_MEMORY)
     
-    #if LOAD_MODEL : 
-       # load_checkpoint(torch.load("my_checkpoint.pth.tar"), model)
+
+    if LOAD_MODEL : 
+        load_checkpoint("C:\\Users\\ABDEL\\Desktop\\POURABDEL\\Donnees d'entrainnement\\train_1\\trainmy_checkpoint.pth.tar", model)
     check_accuracy(val_loader, model, device=DEVICE)
     scaler = torch.cuda.amp.GradScaler()
     for epoch in range(NUM_EPOCHS) :
         train_fn(train_loader, model, optimizer, loss_fn, scaler)
-
+        
         #save the model 
         checkpoint = {
             "state_dict" : model.state_dict(),
             "optimizer"  : optimizer.state_dict(),
         }
         save_checkpoint(checkpoint)
-
+        print("##################",epoch,"##############################")
         #check_ accuracy 
         check_accuracy(val_loader,model, device=DEVICE)
+        torch.save(model.state_dict(), "C:\\Users\\ABDEL\\Desktop\\POURABDEL\\Donnees d'entrainnement\\train_1\\model.pth.tar")
 
         #print some exemple to a folder
-        save_predictions_as_imags(val_loader, model,folder ='C:\\temp_resultat\\test_results\\predect_images\\', device= DEVICE )
+        save_predictions_as_imags(val_loader, model,folder ="C:\\Users\\ABDEL\\Desktop\\POURABDEL\\Donnees d'entrainnement\\train_1\\resultat_predict\\", device= DEVICE )
 
 
 

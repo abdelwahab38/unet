@@ -4,8 +4,10 @@ import torchvision
 from torch.utils.data import DataLoader
 import numpy as np
 from dataset import CarvanaDataset
-
+from PIL import Image
+import os
 from matplotlib import pyplot as plt
+import torchvision.transforms.functional as TF
 
 PALETTE = ([148, 218, 255], [85, 85, 85], [200, 219, 190], 
            [166, 133, 226], [255, 171, 225])
@@ -97,12 +99,14 @@ def display_func(display_list, epoch_save_dic=None, epoch=-1):
     else:    
         plt.savefig(epoch_save_dic+"epoch_{}.png".format(epoch))
 
-def save_checkpoint(state, filename = 'my_checkpoint.pth.tar') : 
+def save_checkpoint(state, filename = "C:\\Users\\ABDEL\\Desktop\\POURABDEL\\Donnees d'entrainnement\\trainmy_checkpoint.pth.tar") : 
     print("=> saving checkpoint")
     torch.save(state, filename)
 def load_checkpoint(state, model) : 
     print("=> loading checkpoint")
-    torch.load_state_dict(state, checkpoint=["state_dict"])
+    checkpoint = torch.load(state)
+    model.load_state_dict(checkpoint["state_dict"])
+    return model
 
 def check_accuracy(loader, model, device = "cuda") : 
     num_correct = 0
@@ -118,7 +122,7 @@ def check_accuracy(loader, model, device = "cuda") :
             preds = (preds>0.5).float()
             num_correct += (preds == y).sum()
             num_pixels +=torch.numel(preds)
-    print("Got ",num_correct/num_pixels, " with accuracy ", (num_correct/num_pixels)*100)
+    ("Got ",num_correct/num_pixels, " with accuracy ", (num_correct/num_pixels)*100)
     model.train()
 
 def save_predictions_as_imags (loader, model, folder = "C:\\temp_resultat\\test_results\\predect_images\\", device = 'cuda') : 
@@ -140,3 +144,17 @@ def get_loaders(train_dir, train_maskdir, val_dir, val_maskdir, batch_size, trai
     val_ds = CarvanaDataset(image_dir= val_dir, mask_dir= val_maskdir, transform=val_transform)
     val_loader = DataLoader(val_ds, batch_size = batch_size, num_workers = num_workers, pin_memory=pin_memory, shuffle = True )
     return train_loader, val_loader
+def save_segmented_image(segmented_image, output_path):
+    # Convertir l'image segmentée en un format approprié pour l'enregistrement
+    segmented_image = segmented_image.squeeze().detach().cpu()
+    segmented_image = TF.to_pil_image(segmented_image)
+
+    # Enregistrer l'image segmentée
+    segmented_image.save(output_path)
+def get_image_paths(image_dir):
+    image_paths = []
+    for filename in os.listdir(image_dir):
+        if filename.endswith(".tif") :
+            image_path = os.path.join(image_dir, filename)
+            image_paths.append(image_path)
+    return image_paths

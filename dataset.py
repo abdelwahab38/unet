@@ -3,6 +3,7 @@ from PIL import Image
 from torch.utils.data import Dataset
 import numpy as np
 import torch
+from torchvision.transforms import functional as TF
 
 class CarvanaDataset(Dataset):
     def __init__(self, image_dir, mask_dir, transform=None) : 
@@ -28,3 +29,20 @@ class CarvanaDataset(Dataset):
             mask = augmentation ["mask"]
         
         return image, mask
+class seg_data(Dataset):
+    def __init__(self, image_paths):
+        self.image_paths = image_paths
+
+    def __len__(self):
+        return len(self.image_paths)
+
+    def __getitem__(self, index):
+        image_path = self.image_paths[index]
+
+        image = Image.open(image_path).convert("RGB")
+        image = TF.to_tensor(image)
+        
+
+        return image
+    
+    
