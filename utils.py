@@ -99,7 +99,7 @@ def display_func(display_list, epoch_save_dic=None, epoch=-1):
     else:    
         plt.savefig(epoch_save_dic+"epoch_{}.png".format(epoch))
 
-def save_checkpoint(state, filename = "C:\\Users\\ABDEL\\Desktop\\POURABDEL\\Donnees d'entrainnement\\trainmy_checkpoint.pth.tar") : 
+def save_checkpoint(state, filename = "E:\\checkpoint_5mm_352Im.pth.tar") : 
     print("=> saving checkpoint")
     torch.save(state, filename)
 def load_checkpoint(state, model) : 

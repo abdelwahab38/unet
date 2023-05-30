@@ -45,4 +45,3 @@ class seg_data(Dataset):
 
         return image
     
-    

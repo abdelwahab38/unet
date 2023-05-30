@@ -16,17 +16,17 @@ from utils import (load_checkpoint, save_checkpoint, check_accuracy,get_loaders,
 LEARNIN_RATE =1E-4
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 BATCH_SIZE = 1
-NUM_EPOCHS= 100
+NUM_EPOCHS= 200
 NUM_WORKERS = 2
 IMAGE_HEIGHT = 512
 IMAGE_WIDTH = 512
 PIN_MEMORY = True
 LOAD_MODEL = True
 
-TRAIN_IMG_DIR  = "C:\\Users\\ABDEL\\Desktop\\POURABDEL\\Donnees d'entrainnement\\train_1\\images_train"
-TRAIN_MASK_DIR  = "C:\\Users\\ABDEL\\Desktop\\POURABDEL\\Donnees d'entrainnement\\train_1\\Labels_train"
-VAL_IMG_DIR  = "C:\\Users\\ABDEL\\Desktop\\POURABDEL\\Donnees d'entrainnement\\train_1\\images_val"
-VAL_MASK_DIR  = "C:\\Users\\ABDEL\\Desktop\\POURABDEL\\Donnees d'entrainnement\\train_1\\Labels_val"
+TRAIN_IMG_DIR  = "E:\\images_train"
+TRAIN_MASK_DIR  = "E:\\Labels_train"
+VAL_IMG_DIR  = "E:\\images_val"
+VAL_MASK_DIR  = "E:\\Labels_val"
 
 def train_fn(loader, model, optimizer, loss_fn, scaler):
     loop = tqdm(loader)
@@ -80,7 +80,12 @@ def main():
         ToTensorV2(),
         ],
     )
-    model = UNET(in_channels = 3, out_channels = 1).to(DEVICE)
+    if torch.cuda.device_count() > 1:
+        model = UNET(in_channels = 3, out_channels = 1)
+        model = nn.DataParallel(model)
+        model.to(DEVICE)
+    else:
+        model = UNET(in_channels = 3, out_channels = 1).to(DEVICE)
     loss_fn = nn.BCEWithLogitsLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=LEARNIN_RATE)
     train_loader, val_loader  = get_loaders(
@@ -95,8 +100,8 @@ def main():
         PIN_MEMORY)
     
 
-    if LOAD_MODEL : 
-        load_checkpoint("C:\\Users\\ABDEL\\Desktop\\POURABDEL\\Donnees d'entrainnement\\train_1\\trainmy_checkpoint.pth.tar", model)
+    #if LOAD_MODEL : 
+        #load_checkpoint("C:\\Users\\ABDEL\\Desktop\\POURABDEL\\Donnees d'entrainnement\\01-promenades des hauteurs\\3mm\\trainmy_checkpoint.pth.tar", model)
     check_accuracy(val_loader, model, device=DEVICE)
     scaler = torch.cuda.amp.GradScaler()
     for epoch in range(NUM_EPOCHS) :
@@ -111,10 +116,10 @@ def main():
         print("##################",epoch,"##############################")
         #check_ accuracy 
         check_accuracy(val_loader,model, device=DEVICE)
-        torch.save(model.state_dict(), "C:\\Users\\ABDEL\\Desktop\\POURABDEL\\Donnees d'entrainnement\\train_1\\model.pth.tar")
+        torch.save(model.state_dict(), "E:\\model_5mm_352Im.pth.tar")
 
         #print some exemple to a folder
-        save_predictions_as_imags(val_loader, model,folder ="C:\\Users\\ABDEL\\Desktop\\POURABDEL\\Donnees d'entrainnement\\train_1\\resultat_predict\\", device= DEVICE )
+        save_predictions_as_imags(val_loader, model,folder ="C:\\Users\\ABDEL\\Desktop\\POURABDEL\\Donnees d'entrainnement\\01-promenades des hauteurs\\3mm\\resultat_predict\\", device= DEVICE )
 
 
 
